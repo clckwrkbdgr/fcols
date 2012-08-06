@@ -1,0 +1,11 @@
+		QTest::newRow("empty")      << QString("")              << false << QChar()    << int(Citygame::ERROR_NOT_A_CITY_NAME);
+		QTest::newRow("space")      << QString(" ")             << false << QChar()    << int(Citygame::ERROR_NOT_A_CITY_NAME);
+		QTest::newRow("moscow")     << QString("Moscow")        << true  << QChar('W') << 0;
+		QTest::newRow("warszawa")   << QString("WARSZAWA")      << true  << QChar('A') << 0;
+		QTest::newRow("amsterdam")  << QString("Amsterdam")     << true  << QChar('M') << 0;
+		QTest::newRow("moscow 2")   << QString("Moscow")        << false << QChar('M') << int(Citygame::ERROR_ALREADY_PRESENT);
+		QTest::newRow("warszawa 2") << QString("Warszawa")      << false << QChar('M') << int(Citygame::ERROR_WRONG_FIRST_LETTER);
+		QTest::newRow("memphis")    << QString("_Memphis")      << true  << QChar('S') << 0;
+		QTest::newRow("sa1")        << QString("San Andreas 1") << true  << QChar('S') << 0;
+		QTest::newRow("sa2")        << QString("san ANDREAS 2") << false << QChar('S') << int(Citygame::ERROR_ALREADY_PRESENT);
+		QTest::newRow("sa1 2")      << QString("San Andreas 1") << false << QChar('S') << int(Citygame::ERROR_ALREADY_PRESENT);
