@@ -1,21 +1,80 @@
 #!/usr/bin/python
 import sys
 
-seps = sys.argv[1:]
-print seps
+def format_line(line, separators, positions):
+	assert(len(separators) == len(positions))
+	result = ''
+	start = 0
+	for sep, pos in zip(separators, positions):
+		stop = line.find(sep, start)
+		if stop < 0:
+			continue
+		result += line[start:stop] + ' ' * (pos - stop) + sep
+		start = stop + len(sep)
+	result += line[start:]
+	return result
+
+#def test(line, sep, pos, expect):
+#	result = format_line(line, sep, pos)
+#	if result != expect:
+#		print "expect != result"
+#		print "\texpect:", expect
+#		print "\tresult:", result
+
+#test(" a << b << c", ['<<', '<<'], [2, 3], " a   << b    << c")
+#test(" a << b << c", ['<<'], [2], " a   << b << c")
+#test("f(a, b)", ['<<'], [2], "f(a, b)")
+#test("a << f(a, b)", ['f', '<<'], [2, 3], "a <<   f(a, b)")
+#test("a << f(a, b) << b", ['f', '"', '<<'], [2, 3, 3], "a <<   f(a, b)    << b")
+
+def get_positions(line, separators):
+	positions = []
+	last = 0
+	for sep in separators:
+		pos = line.find(sep, last + 1)
+		#print pos, sep, last + 1, line[pos:pos + 2]
+		positions.append(pos)
+		if pos > -1:
+			last = pos
+	return positions
+
+def find_max(a, b):
+	assert(len(a) == len(b))
+	r = []
+	m_x, m_y = 0, 0
+	for x, y in zip(a, b):
+		if m_x + x == m_y + y:
+			r.append(m_x + x)
+		elif m_x + x < m_y + y:
+			r.append(m_y + y)
+			m_x += (m_y + y) - (m_x + x)
+		elif m_x + x > m_y + y:
+			r.append(m_x + x)
+			m_y += (m_x + x) - (m_y + y)
+
+	return r
+	#return map(max, zip(a, b))
+
+separators = sys.argv[1:]
+print separators
 
 lines = []
 while True:
 	try:
-		line = raw_input()
-		start = None
-		for sep in seps:
-			before, s, after = partition(line)
-			if s:
-
-			
-		lines.append(raw_input())
+		lines.append(unicode(raw_input().decode("utf-8")))
 	except EOFError:
 		break
 
-print lines
+for line in lines:
+	print line
+
+positions = [0 for sep in separators]
+for line in lines:
+	new_pos = get_positions(line, separators)
+	print new_pos, positions,
+	positions = find_max(positions, new_pos)
+	print positions
+
+
+for line in lines:
+	print format_line(line, separators, positions)
