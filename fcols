@@ -1,38 +1,28 @@
 #!/usr/bin/python
 import sys
+from operator import add
 
 def format_line(line, separators, positions):
 	assert(len(separators) == len(positions))
 	result = ''
 	start = 0
+	shift = 0
 	for sep, pos in zip(separators, positions):
 		stop = line.find(sep, start)
 		if stop < 0:
 			continue
-		result += line[start:stop] + ' ' * (pos - stop) + sep
+		result += line[start:stop] + ' ' * (shift + pos - stop) + sep
+		print '{1}, {2}, "{0}"'.format(result, shift, pos)
+		shift -= pos - stop
 		start = stop + len(sep)
 	result += line[start:]
 	return result
-
-#def test(line, sep, pos, expect):
-#	result = format_line(line, sep, pos)
-#	if result != expect:
-#		print "expect != result"
-#		print "\texpect:", expect
-#		print "\tresult:", result
-
-#test(" a << b << c", ['<<', '<<'], [2, 3], " a   << b    << c")
-#test(" a << b << c", ['<<'], [2], " a   << b << c")
-#test("f(a, b)", ['<<'], [2], "f(a, b)")
-#test("a << f(a, b)", ['f', '<<'], [2, 3], "a <<   f(a, b)")
-#test("a << f(a, b) << b", ['f', '"', '<<'], [2, 3, 3], "a <<   f(a, b)    << b")
 
 def get_positions(line, separators):
 	positions = []
 	last = 0
 	for sep in separators:
 		pos = line.find(sep, last + 1)
-		#print pos, sep, last + 1, line[pos:pos + 2]
 		positions.append(pos)
 		if pos > -1:
 			last = pos
@@ -41,40 +31,67 @@ def get_positions(line, separators):
 def find_max(a, b):
 	assert(len(a) == len(b))
 	r = []
-	m_x, m_y = 0, 0
-	for x, y in zip(a, b):
-		if m_x + x == m_y + y:
-			r.append(m_x + x)
-		elif m_x + x < m_y + y:
-			r.append(m_y + y)
-			m_x += (m_y + y) - (m_x + x)
-		elif m_x + x > m_y + y:
-			r.append(m_x + x)
-			m_y += (m_x + x) - (m_y + y)
+	for i in range(len(a)):
+		if a[i] < b[i]:
+			d = b[i] - a[i]
+			d = [(0 if x < i else d) for x in range(len(a))]
+			a = map(add, a, d)
+		elif a[i] > b[i]:
+			d = a[i] - b[i]
+			d = [(0 if x < i else d) for x in range(len(a))]
+			b = map(add, b, d)
 
-	return r
-	#return map(max, zip(a, b))
+	assert a == b
+	return a
+
+def test(line, sep, pos, expect):
+	result = format_line(line, sep, pos)
+	if result != expect:
+		print "expect != result"
+		print "\texpect:", expect
+		print "\tresult:", result
+
+"""
+test(" a << b << c", ['<<', '<<'], [5, 13], " a   << b    << c")
+test(" a << b << c", ['<<'], [5], " a   << b << c")
+test("f(a, b)", ['<<'], [2], "f(a, b)")
+test("a << f(a, b)", ['f', '<<'], [7, 13], "a <<   f(a, b)")
+test("a << f(a, b) << b", ['f', '"', '<<'], [7, 10, 18], "a <<   f(a, b)    << b")
+test("of a place called the Khush-Oil Hotel.", [' ', ' ', ' ', ' '], [2, 9, 11, 12], "of a      place called the Khush-Oil Hotel.")
+"""
+
+test('QTest::newRow("empty")      << QString("")              << false << QChar() << int(Citygame::ERROR_NOT_A_CITY_NAME);', ['<<', '<<', '<<', '<<'], [30, 58, 67, 81], 'QTest::newRow("empty")      << QString("")              << false << QChar()    << int(Citygame::ERROR_NOT_A_CITY_NAME);')
+
+test('QTest::newRow("space")      << QString(" ")             << false << QChar() << int(Citygame::ERROR_NOT_A_CITY_NAME);', ['<<', '<<', '<<', '<<'], [30, 58, 67, 81], 'QTest::newRow("space")      << QString(" ")             << false << QChar()    << int(Citygame::ERROR_NOT_A_CITY_NAME);')
+
+test('QTest::newRow("moscow")     << QString("Moscow")        << true << QChar("W") << 0;', ['<<', '<<', '<<', '<<'], [30, 58, 67, 81], 'QTest::newRow("moscow")     << QString("Moscow")        << true  << QChar("W") << 0;')
+
+test('QTest::newRow("warszawa")   << QString("WARSZAWA")      << true << QChar("A") << 0;', ['<<', '<<', '<<', '<<'], [30, 58, 67, 81], 'QTest::newRow("warszawa")   << QString("WARSZAWA")      << true  << QChar("A") << 0;')
+
+test('QTest::newRow("amsterdam")  << QString("Amsterdam")     << true << QChar("M") << 0;', ['<<', '<<', '<<', '<<'], [30, 58, 67, 81], 'QTest::newRow("amsterdam")  << QString("Amsterdam")     << true  << QChar("M") << 0;')
+
+test('QTest::newRow("memphis")    << QString("_Memphis")      << true << QChar("S") << 0;', ['<<', '<<', '<<', '<<'], [30, 58, 67, 81], 'QTest::newRow("memphis")    << QString("_Memphis")      << true  << QChar("S") << 0;')
+
+test('QTest::newRow("sa1")        << QString("San Andreas 1") << true << QChar("S") << 0;', ['<<', '<<', '<<', '<<'], [30, 58, 67, 81], 'QTest::newRow("sa1")        << QString("San Andreas 1") << true  << QChar("S") << 0;')
+
+sys.exit(0)
 
 separators = sys.argv[1:]
-print separators
 
 lines = []
 while True:
 	try:
-		lines.append(unicode(raw_input().decode("utf-8")))
+		lines.append(raw_input())
 	except EOFError:
 		break
-
-for line in lines:
-	print line
 
 positions = [0 for sep in separators]
 for line in lines:
 	new_pos = get_positions(line, separators)
-	print new_pos, positions,
 	positions = find_max(positions, new_pos)
 	print positions
 
 
 for line in lines:
 	print format_line(line, separators, positions)
+
