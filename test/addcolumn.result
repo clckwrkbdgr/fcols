@@ -1,4 +1,5 @@
-		QTest::addColumn<QString>("cityName");
-		QTest::addColumn<bool>   ("success");
+		QTest::addColumn<QString>("cityName"     );
+		QTest::addColumn<bool>   ("success"      );
+		// function(argument);
 		QTest::addColumn<QChar>  ("currentLetter");
-		QTest::addColumn<int>    ("error");
+		QTest::addColumn<int>    ("error"        );

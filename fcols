@@ -2,96 +2,65 @@
 import sys
 from operator import add
 
-def format_line(line, separators, positions):
-	assert(len(separators) == len(positions))
-	result = ''
-	start = 0
-	shift = 0
-	for sep, pos in zip(separators, positions):
-		stop = line.find(sep, start)
-		if stop < 0:
-			continue
-		result += line[start:stop] + ' ' * (shift + pos - stop) + sep
-		print '{1}, {2}, "{0}"'.format(result, shift, pos)
-		shift -= pos - stop
-		start = stop + len(sep)
-	result += line[start:]
+def read_lines():
+	lines = []
+	while True:
+		try:
+			lines.append(raw_input())
+		except EOFError:
+			break
+	return lines
+
+def get_all_column_data(lines, separators):
+	result = []
+	for line in lines:
+		last = 0
+		columns = []
+		for sep in separators:
+			pos = line.find(sep, last)
+			if pos < 0:
+				columns.append(-1)
+			else:
+				columns.append(pos - last)
+				last = pos + len(sep)
+		result.append(columns)
 	return result
 
-def get_positions(line, separators):
-	positions = []
-	last = 0
-	for sep in separators:
-		pos = line.find(sep, last + 1)
-		positions.append(pos)
-		if pos > -1:
-			last = pos
-	return positions
+def format_columns(all_columns, separators):
+	missed = [{} for x in range(len(all_columns))]
+	for i in range(len(separators)):
+		max_pos = 0
+		for columns, m in zip(all_columns, missed):
+			if columns[i] < 0:
+				m[i] = 0
+			if columns[i] > max_pos:
+				if not m:
+					max_pos = columns[i]
 
-def find_max(a, b):
-	assert(len(a) == len(b))
-	r = []
-	for i in range(len(a)):
-		if a[i] < b[i]:
-			d = b[i] - a[i]
-			d = [(0 if x < i else d) for x in range(len(a))]
-			a = map(add, a, d)
-		elif a[i] > b[i]:
-			d = a[i] - b[i]
-			d = [(0 if x < i else d) for x in range(len(a))]
-			b = map(add, b, d)
+		for columns, m in zip(all_columns, missed):
+			if not m:
+				columns[i] = max_pos
+	return missed, all_columns
 
-	assert a == b
-	return a
-
-def test(line, sep, pos, expect):
-	result = format_line(line, sep, pos)
-	if result != expect:
-		print "expect != result"
-		print "\texpect:", expect
-		print "\tresult:", result
-
-"""
-test(" a << b << c", ['<<', '<<'], [5, 13], " a   << b    << c")
-test(" a << b << c", ['<<'], [5], " a   << b << c")
-test("f(a, b)", ['<<'], [2], "f(a, b)")
-test("a << f(a, b)", ['f', '<<'], [7, 13], "a <<   f(a, b)")
-test("a << f(a, b) << b", ['f', '"', '<<'], [7, 10, 18], "a <<   f(a, b)    << b")
-test("of a place called the Khush-Oil Hotel.", [' ', ' ', ' ', ' '], [2, 9, 11, 12], "of a      place called the Khush-Oil Hotel.")
-"""
-
-test('QTest::newRow("empty")      << QString("")              << false << QChar() << int(Citygame::ERROR_NOT_A_CITY_NAME);', ['<<', '<<', '<<', '<<'], [30, 58, 67, 81], 'QTest::newRow("empty")      << QString("")              << false << QChar()    << int(Citygame::ERROR_NOT_A_CITY_NAME);')
-
-test('QTest::newRow("space")      << QString(" ")             << false << QChar() << int(Citygame::ERROR_NOT_A_CITY_NAME);', ['<<', '<<', '<<', '<<'], [30, 58, 67, 81], 'QTest::newRow("space")      << QString(" ")             << false << QChar()    << int(Citygame::ERROR_NOT_A_CITY_NAME);')
-
-test('QTest::newRow("moscow")     << QString("Moscow")        << true << QChar("W") << 0;', ['<<', '<<', '<<', '<<'], [30, 58, 67, 81], 'QTest::newRow("moscow")     << QString("Moscow")        << true  << QChar("W") << 0;')
-
-test('QTest::newRow("warszawa")   << QString("WARSZAWA")      << true << QChar("A") << 0;', ['<<', '<<', '<<', '<<'], [30, 58, 67, 81], 'QTest::newRow("warszawa")   << QString("WARSZAWA")      << true  << QChar("A") << 0;')
-
-test('QTest::newRow("amsterdam")  << QString("Amsterdam")     << true << QChar("M") << 0;', ['<<', '<<', '<<', '<<'], [30, 58, 67, 81], 'QTest::newRow("amsterdam")  << QString("Amsterdam")     << true  << QChar("M") << 0;')
-
-test('QTest::newRow("memphis")    << QString("_Memphis")      << true << QChar("S") << 0;', ['<<', '<<', '<<', '<<'], [30, 58, 67, 81], 'QTest::newRow("memphis")    << QString("_Memphis")      << true  << QChar("S") << 0;')
-
-test('QTest::newRow("sa1")        << QString("San Andreas 1") << true << QChar("S") << 0;', ['<<', '<<', '<<', '<<'], [30, 58, 67, 81], 'QTest::newRow("sa1")        << QString("San Andreas 1") << true  << QChar("S") << 0;')
-
-sys.exit(0)
+def formatted_lines(lines, missed, all_columns):
+	for line, m, columns in zip(lines, missed, all_columns):
+		if m:
+			yield line
+			continue
+		last = 0
+		result = ''
+		for sep, col in zip(separators, columns):
+			pos = line.find(sep, last)
+			if pos > -1:
+				result += line[last:pos].ljust(col) + sep
+				last = pos + len(sep)
+		result += line[last:]
+		yield result
 
 separators = sys.argv[1:]
-
-lines = []
-while True:
-	try:
-		lines.append(raw_input())
-	except EOFError:
-		break
-
-positions = [0 for sep in separators]
-for line in lines:
-	new_pos = get_positions(line, separators)
-	positions = find_max(positions, new_pos)
-	print positions
-
-
-for line in lines:
-	print format_line(line, separators, positions)
+lines = read_lines()
+all_columns = get_all_column_data(lines, separators)
+missed, all_columns = format_columns(all_columns, separators)
+for line in formatted_lines(lines, missed, all_columns):
+	print line
 

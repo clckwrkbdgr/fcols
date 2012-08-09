@@ -1,4 +1,3 @@
-		const int PLAYER = 1;
 		QFETCH(QString, cityName);
 		QFETCH(bool, success);
 		QFETCH(QChar, currentLetter);
