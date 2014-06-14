@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 import sys
 from operator import add
 
@@ -6,7 +6,7 @@ def read_lines():
 	lines = []
 	while True:
 		try:
-			lines.append(raw_input())
+			lines.append(input())
 		except EOFError:
 			break
 	return lines
@@ -62,5 +62,5 @@ lines = read_lines()
 all_columns = get_all_column_data(lines, separators)
 missed, all_columns = format_columns(all_columns, separators)
 for line in formatted_lines(lines, missed, all_columns):
-	print line
+	print(line)
 
