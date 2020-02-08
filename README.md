@@ -32,4 +32,6 @@ It can be also used in editors that support external commands like ViM: select s
 
 ## Installation
 
-No installation needed, just put `fcols` file somewhere in the $PATH.
+	python setup.py build
+	python setup.py bdist_wheel
+	sudo pip install dist/*.whl
