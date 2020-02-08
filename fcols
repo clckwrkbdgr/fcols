@@ -57,10 +57,13 @@ def formatted_lines(lines, missed, all_columns):
 		result += line[last:]
 		yield result
 
-separators = sys.argv[1:]
-lines = read_lines()
-all_columns = get_all_column_data(lines, separators)
-missed, all_columns = format_columns(all_columns, separators)
-for line in formatted_lines(lines, missed, all_columns):
-	print(line)
+def main():
+	separators = sys.argv[1:]
+	lines = read_lines()
+	all_columns = get_all_column_data(lines, separators)
+	missed, all_columns = format_columns(all_columns, separators)
+	for line in formatted_lines(lines, missed, all_columns):
+		print(line)
 
+if __name__ == '__main__':
+	main()
